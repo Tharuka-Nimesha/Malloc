@@ -118,6 +118,79 @@ class LinkedList{
     }
 }
 
+class Memory{
+	byte ram [] = new byte[25000];
+	int used = 0;
+	LinkedList memList = new LinkedList();
+
+	public void MyMalloc(String processNo,int processSize){
+		LinkedList.Block block;
+		if(used>=25000){
+			System.out.println("Not enough space.");
+		}
+
+		else if(used==0){ //if no block is used, allocating the head of th elinked list
+			block=memList.allocate(processNo, processSize);
+			used+=block.getSize();
+		}
+
+		else{ //if the linked list is not empty
+			LinkedList.Block cur = memList.head;
+			LinkedList.Block selected=cur;
+
+			while(cur!=null){ //traversing to find a best fitting hole
+				if(cur.holeExists && (processSize<=cur.processSize)){
+					if(cur.processSize<=selected.processSize){
+						selected=cur;
+					}
+				}
+				cur=cur.next;
+			}
+
+			if(selected==memList.head && selected.holeExists==false){ //no holes have been found
+				block=memList.allocate(processNo, processSize);
+				used+=block.getSize();
+			}
+			else{ //a hole has been found
+				block=memList.allocateHole(selected, processNo, processSize);
+				used+=block.getSize();
+			}
+
+			for(int i=block.begin; i<=block.end; i++){
+				ram[i]=1; //making the ram partitions one.
+			}
+		}
+		used+=processSize;
+	}
+
+	public void MyFree(String processNo){
+		LinkedList.Block block=memList.remove(processNo);
+		if(block!=null){
+			used-=block.processSize;
+			used-=block.getSize();
+
+			for(int i=block.begin; i<=block.end; i++){
+				ram[i]=0; //making the ram partitions zero.
+			}
+		}
+	}
+
+	public void print(){
+		LinkedList.Block current=memList.head;
+
+		while(current!=null)
+		{
+			if(current.holeExists==true)
+				System.out.println("Free space "+current.begin+" - "+current.end);
+			else
+				System.out.println(current.processNo+" "+current.begin+" - "+current.end);
+			current=current.next;
+		}
+
+		System.out.println("Total space used "+used+" Bytes");
+	}
+}
+
 class mymalloc{
 
 	public static void main(String args[]){
